@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Employee Certifications</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <h1>Employee Certifications</h1>
+    <div class="meta" id="loadedAt"></div>
+  </header>
+
+  <section class="summary" id="summary"></section>
+
+  <section class="controls">
+    <div class="control control-search">
+      <label for="searchBox">Search</label>
+      <input type="text" id="searchBox" placeholder="Search employee, vendor, or certificate…" />
+    </div>
+    <div class="control">
+      <label for="filterVendor">Vendor</label>
+      <select id="filterVendor"><option value="">All vendors</option></select>
+    </div>
+    <div class="control">
+      <label for="filterCertificate">Certificate</label>
+      <select id="filterCertificate"><option value="">All certificates</option></select>
+    </div>
+    <div class="control">
+      <label for="filterStatus">Status</label>
+      <select id="filterStatus">
+        <option value="">All statuses</option>
+        <option value="valid">Valid</option>
+        <option value="expiring_soon">Expiring soon (≤90 days)</option>
+        <option value="expired">Expired</option>
+        <option value="no_expiration">No expiration</option>
+        <option value="unknown">Unknown</option>
+      </select>
+    </div>
+    <div class="control">
+      <button id="clearFilters">Clear filters</button>
+    </div>
+    <div class="control control-add">
+      <button id="openAddModal" class="primary">+ Add certification</button>
+    </div>
+  </section>
+
+  <section class="table-wrap">
+    <table id="table">
+      <thead>
+        <tr>
+          <th data-key="employee">Employee</th>
+          <th data-key="vendor">Vendor</th>
+          <th data-key="certificate">Certificate</th>
+          <th data-key="expirationDate">Expiration</th>
+          <th data-key="status">Status</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <p id="emptyState" class="empty-state" hidden>No certifications match these filters.</p>
+  </section>
+
+  <dialog id="addModal">
+    <form id="addForm" method="dialog">
+      <h2>Add certification</h2>
+
+      <div class="field">
+        <label for="addEmployee">Employee name</label>
+        <input type="text" id="addEmployee" list="employeeOptions" required autocomplete="off" />
+        <datalist id="employeeOptions"></datalist>
+      </div>
+
+      <div class="field">
+        <label for="addVendor">Vendor</label>
+        <input type="text" id="addVendor" list="vendorOptions" required autocomplete="off" />
+        <datalist id="vendorOptions"></datalist>
+      </div>
+
+      <div class="field">
+        <label for="addCertificate">Certificate</label>
+        <input type="text" id="addCertificate" list="certificateOptions" required autocomplete="off" />
+        <datalist id="certificateOptions"></datalist>
+      </div>
+
+      <div class="field">
+        <label for="addExpiration">Expiration date (leave blank if it doesn't expire)</label>
+        <input type="date" id="addExpiration" />
+      </div>
+
+      <p id="addError" class="form-error" hidden></p>
+
+      <div class="modal-actions">
+        <button type="button" id="cancelAdd">Cancel</button>
+        <button type="submit" id="submitAdd" class="primary">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>

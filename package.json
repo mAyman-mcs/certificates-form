@@ -1,0 +1,13 @@
+{
+  "name": "employee-certifications-app",
+  "version": "1.0.0",
+  "description": "Lists employees and their IT certifications, filterable by certificate/vendor/status.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "xlsx": "^0.18.5"
+  }
+}
