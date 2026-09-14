@@ -1,0 +1,10 @@
+FROM public.ecr.aws/lambda/nodejs:20
+
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+
+COPY lib ./lib
+COPY public ./public
+COPY server.js ./
+
+CMD ["server.handler"]
