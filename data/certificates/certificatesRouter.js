@@ -17,6 +17,19 @@ function normalizeExpiration(raw) {
   return value;
 }
 
+/** Returns the trimmed link, null when absent, or false when malformed/unsafe. */
+function normalizeReferenceLink(raw) {
+  const value = String(raw || '').trim();
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return false;
+  } catch {
+    return false;
+  }
+  return value;
+}
+
 router.get('/', async (req, res) => {
   const approval = req.query.approval;
   if (approval !== undefined && !APPROVAL_STATUSES.includes(approval)) {
@@ -40,7 +53,7 @@ router.get('/', async (req, res) => {
 // An employee submitting a request for themselves. Admins adding a certificate
 // for someone else use POST /api/admin/certificates instead.
 router.post('/', async (req, res) => {
-  const { vendor, certificate, expirationDate } = req.body || {};
+  const { vendor, certificate, expirationDate, referenceLink } = req.body || {};
   if (!vendor || !String(vendor).trim() || !certificate || !String(certificate).trim()) {
     return res.status(400).json({ error: 'vendor and certificate are required.' });
   }
@@ -49,6 +62,10 @@ router.post('/', async (req, res) => {
   if (expiration === false) {
     return res.status(400).json({ error: 'expirationDate must be a valid YYYY-MM-DD date.' });
   }
+  const link = normalizeReferenceLink(referenceLink);
+  if (link === false) {
+    return res.status(400).json({ error: 'referenceLink must be a valid http(s) URL.' });
+  }
 
   try {
     const record = await certificatesRepo.create({
@@ -56,6 +73,7 @@ router.post('/', async (req, res) => {
       vendorName: vendor,
       certificateName: certificate,
       expirationDate: expiration,
+      referenceLink: link,
       approvalStatus: 'pending',
       requestedBy: req.user.sub,
     });
@@ -69,4 +87,4 @@ router.post('/', async (req, res) => {
   }
 });
 
-module.exports = { router, normalizeExpiration };
+module.exports = { router, normalizeExpiration, normalizeReferenceLink };

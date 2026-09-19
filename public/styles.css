@@ -344,6 +344,8 @@ tbody tr:hover { background: color-mix(in srgb, var(--accent) 6%, transparent); 
   max-width: 280px;
 }
 
+.ref-link { text-decoration: none; margin-left: 4px; }
+
 .empty-state {
   padding: 24px;
   text-align: center;

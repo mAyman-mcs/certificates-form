@@ -9,7 +9,7 @@ const APPROVAL_STATUSES = ['pending', 'approved', 'rejected'];
 const SELECT_RECORDS = `
   SELECT c.id, c.user_id, u.full_name AS employee, v.name AS vendor,
          c.certificate_name AS certificate, c.expiration_date, c.expiration_text,
-         c.kind, c.source, c.approval_status, c.rejection_reason,
+         c.kind, c.source, c.approval_status, c.rejection_reason, c.reference_link,
          c.reviewed_at, c.created_at, r.full_name AS reviewed_by_name
   FROM certificates c
   JOIN users u ON u.id = c.user_id
@@ -29,6 +29,7 @@ function toRecord(row, now = new Date()) {
     status: computeStatus(row.kind, row.expiration_date, now),
     approvalStatus: row.approval_status,
     rejectionReason: row.rejection_reason || null,
+    referenceLink: row.reference_link || null,
     reviewedByName: row.reviewed_by_name || null,
     reviewedAt: row.reviewed_at || null,
     createdAt: row.created_at,
@@ -62,6 +63,7 @@ async function create({
   vendorName,
   certificateName,
   expirationDate = null,
+  referenceLink = null,
   approvalStatus = 'pending',
   requestedBy = null,
   reviewedBy = null,
@@ -75,9 +77,9 @@ async function create({
     const { rows } = await client.query(
       `INSERT INTO certificates
          (user_id, vendor_id, certificate_name, expiration_date, expiration_text,
-          kind, source, approval_status, requested_by, reviewed_by, reviewed_at)
+          kind, source, approval_status, requested_by, reviewed_by, reviewed_at, reference_link)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
-               CASE WHEN $10::int IS NULL THEN NULL ELSE now() END)
+               CASE WHEN $10::int IS NULL THEN NULL ELSE now() END, $11)
        RETURNING id`,
       [
         userId,
@@ -90,6 +92,7 @@ async function create({
         approvalStatus,
         requestedBy,
         reviewedBy,
+        referenceLink,
       ]
     );
     await client.query('COMMIT');

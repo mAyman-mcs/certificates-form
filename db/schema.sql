@@ -85,3 +85,11 @@ JOIN vendors v ON v.id = c.vendor_id;
 -- (2MB cap, enforced by the upload handler, not here) so this stays cheap.
 ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_photo BYTEA;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_photo_type VARCHAR(100);
+
+-- Optional link to evidence for a certificate (verification page, badge URL,
+-- PDF, etc). The CHECK is defense in depth — the app validates this too, but
+-- the row itself can never end up with a javascript:/data: scheme.
+ALTER TABLE certificates ADD COLUMN IF NOT EXISTS reference_link TEXT;
+ALTER TABLE certificates DROP CONSTRAINT IF EXISTS certificates_reference_link_check;
+ALTER TABLE certificates ADD CONSTRAINT certificates_reference_link_check
+  CHECK (reference_link IS NULL OR reference_link ~* '^https?://');

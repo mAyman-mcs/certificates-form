@@ -319,7 +319,7 @@ function renderPendingTab() {
     <tr>
       <td>${escapeHtml(r.employee)}</td>
       <td>${escapeHtml(r.vendor)}</td>
-      <td>${escapeHtml(r.certificate)}</td>
+      <td>${certificateCell(r)}</td>
       <td>${formatExpiration(r)}</td>
       <td>${formatRequestedAt(r)}</td>
       <td><div class="row-actions">
@@ -403,7 +403,7 @@ function renderTable(filtered) {
     <tr>
       ${employeeCell(r)}
       <td>${escapeHtml(r.vendor)}</td>
-      <td>${escapeHtml(r.certificate)}</td>
+      <td>${certificateCell(r)}</td>
       <td>${formatExpiration(r)}</td>
       <td><span class="badge ${r.status}">${STATUS_LABEL[r.status] || r.status}</span></td>
       <td>${approvalBadge(r)}</td>
@@ -416,6 +416,13 @@ function formatExpiration(r) {
   if (r.expirationDate) return r.expirationDate;
   if (r.expirationText) return escapeHtml(r.expirationText);
   return '—';
+}
+
+// Shared by every table that lists certificates — the link rides along with
+// the name instead of adding a whole new column to an already-busy table.
+function certificateCell(r) {
+  if (!r.referenceLink) return escapeHtml(r.certificate);
+  return `${escapeHtml(r.certificate)} <a class="ref-link" href="${escapeHtml(r.referenceLink)}" target="_blank" rel="noopener noreferrer" aria-label="Open reference link (opens in new tab)">🔗</a>`;
 }
 
 // Quotes matter as much as angle brackets here: rejection reasons are free
@@ -693,7 +700,12 @@ function setupAddModal() {
       return;
     }
 
-    const payload = { vendor, certificate, expirationDate: el('addExpiration').value };
+    const payload = {
+      vendor,
+      certificate,
+      expirationDate: el('addExpiration').value,
+      referenceLink: el('addReferenceLink').value.trim(),
+    };
     // Admins post to the admin route with an explicit owner; an employee's
     // own request goes to the shared route and is always for themselves.
     const url = isAdmin() ? '/api/admin/certificates' : '/api/certificates';
@@ -1090,7 +1102,7 @@ function renderProfileInto(cardEl, tbodyEl, user, records) {
     : records.map(r => `
       <tr>
         <td>${escapeHtml(r.vendor)}</td>
-        <td>${escapeHtml(r.certificate)}</td>
+        <td>${certificateCell(r)}</td>
         <td>${formatExpiration(r)}</td>
         <td><span class="badge ${r.status}">${STATUS_LABEL[r.status] || r.status}</span></td>
         <td>${approvalBadge(r)}</td>

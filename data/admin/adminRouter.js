@@ -2,7 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const { createUser } = require('../auth/authService');
 const { requireAuth, requireAdmin } = require('../auth/authMiddleware');
-const { normalizeExpiration } = require('../certificates/certificatesRouter');
+const { normalizeExpiration, normalizeReferenceLink } = require('../certificates/certificatesRouter');
 const usersRepo = require('../../db/usersRepo');
 const certificatesRepo = require('../../db/certificatesRepo');
 
@@ -139,7 +139,7 @@ router.delete('/users/:id', async (req, res) => {
 
 // Admin adding a certificate on someone's behalf — lands approved, no review needed.
 router.post('/certificates', async (req, res) => {
-  const { userId, vendor, certificate, expirationDate } = req.body || {};
+  const { userId, vendor, certificate, expirationDate, referenceLink } = req.body || {};
   const targetId = parseId(userId);
   if (!targetId) return res.status(400).json({ error: 'A valid userId is required.' });
   if (!vendor || !String(vendor).trim() || !certificate || !String(certificate).trim()) {
@@ -149,6 +149,10 @@ router.post('/certificates', async (req, res) => {
   const expiration = normalizeExpiration(expirationDate);
   if (expiration === false) {
     return res.status(400).json({ error: 'expirationDate must be a valid YYYY-MM-DD date.' });
+  }
+  const link = normalizeReferenceLink(referenceLink);
+  if (link === false) {
+    return res.status(400).json({ error: 'referenceLink must be a valid http(s) URL.' });
   }
 
   try {
@@ -160,6 +164,7 @@ router.post('/certificates', async (req, res) => {
       vendorName: vendor,
       certificateName: certificate,
       expirationDate: expiration,
+      referenceLink: link,
       approvalStatus: 'approved',
       requestedBy: req.user.sub,
       reviewedBy: req.user.sub,
