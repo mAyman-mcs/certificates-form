@@ -4,12 +4,17 @@
   "description": "Lists employees and their IT certifications, filterable by certificate/vendor/status.",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "db:test": "node db/testConnection.js",
+    "db:migrate": "node db/migrate.js",
+    "db:seed": "node db/seed.js"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1131.0",
+    "bcryptjs": "^3.0.3",
     "express": "^4.19.2",
-    "serverless-http": "^4.0.0",
-    "xlsx": "^0.18.5"
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.4.0",
+    "pg": "^8.23.0",
+    "serverless-http": "^4.0.0"
   }
 }

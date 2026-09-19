@@ -7,27 +7,85 @@
 <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <section id="loginScreen" class="auth-screen">
+    <form id="loginForm" class="auth-card">
+      <h2>Log in</h2>
+      <div class="field">
+        <label for="loginEmail">Email</label>
+        <input type="email" id="loginEmail" required autocomplete="username" />
+      </div>
+      <div class="field">
+        <label for="loginPassword">Password</label>
+        <input type="password" id="loginPassword" required autocomplete="current-password" />
+      </div>
+      <p id="loginError" class="form-error" hidden></p>
+      <div class="modal-actions">
+        <button type="submit" class="primary">Log in</button>
+      </div>
+    </form>
+  </section>
+
+  <section id="resetScreen" class="auth-screen" hidden>
+    <form id="resetForm" class="auth-card">
+      <h2>Set a new password</h2>
+      <p class="meta">This is your first login (or your password was reset) — choose a new password to continue.</p>
+      <div class="field" id="resetCurrentPasswordField">
+        <label for="resetCurrentPassword">Current (temporary) password</label>
+        <input type="password" id="resetCurrentPassword" autocomplete="current-password" />
+      </div>
+      <div class="field">
+        <label for="resetNewPassword">New password</label>
+        <input type="password" id="resetNewPassword" required autocomplete="new-password" minlength="8" />
+      </div>
+      <div class="field">
+        <label for="resetConfirmPassword">Confirm new password</label>
+        <input type="password" id="resetConfirmPassword" required autocomplete="new-password" minlength="8" />
+      </div>
+      <p id="resetError" class="form-error" hidden></p>
+      <div class="modal-actions">
+        <button type="submit" class="primary">Set password</button>
+      </div>
+    </form>
+  </section>
+
+  <div id="app" hidden>
   <header class="topbar">
     <h1>Employee Certifications</h1>
-    <div class="meta" id="loadedAt"></div>
+    <div class="topbar-right">
+      <div class="user-box">
+        <span id="currentUserAvatar"></span>
+        <span id="currentUserLabel"></span>
+        <button id="logoutBtn" type="button">Log out</button>
+      </div>
+    </div>
   </header>
 
-  <section class="summary" id="summary"></section>
+  <nav class="tabs admin-only" id="tabsNav">
+    <button type="button" class="tab active" data-tab="certificates">Certificates</button>
+    <button type="button" class="tab admin-only" data-tab="pending">Pending <span id="pendingCount" class="tab-badge" hidden></span></button>
+    <button type="button" class="tab admin-only" data-tab="users">Users</button>
+    <button type="button" class="tab" data-tab="profile">My profile</button>
+  </nav>
+
+  <section id="tab-certificates">
+  <div class="profile-card employee-only" id="homeProfileCard"></div>
+
+  <section class="summary admin-only" id="summary"></section>
 
   <section class="controls">
-    <div class="control control-search">
+    <div class="control control-search admin-only">
       <label for="searchBox">Search</label>
       <input type="text" id="searchBox" placeholder="Search employee, vendor, or certificate…" />
     </div>
-    <div class="control">
+    <div class="control admin-only">
       <label for="filterVendor">Vendor</label>
       <select id="filterVendor"><option value="">All vendors</option></select>
     </div>
-    <div class="control">
+    <div class="control admin-only">
       <label for="filterCertificate">Certificate</label>
       <select id="filterCertificate"><option value="">All certificates</option></select>
     </div>
-    <div class="control">
+    <div class="control admin-only">
       <label for="filterStatus">Status</label>
       <select id="filterStatus">
         <option value="">All statuses</option>
@@ -38,7 +96,15 @@
         <option value="unknown">Unknown</option>
       </select>
     </div>
-    <div class="control">
+    <div class="control admin-only">
+      <label for="filterApproval">Request</label>
+      <select id="filterApproval">
+        <option value="">All requests</option>
+        <option value="approved">Approved</option>
+        <option value="rejected">Rejected</option>
+      </select>
+    </div>
+    <div class="control admin-only">
       <button id="clearFilters">Clear filters</button>
     </div>
     <div class="control control-add">
@@ -46,42 +112,143 @@
     </div>
   </section>
 
+  <h2 class="profile-heading employee-only">My certifications</h2>
+
   <section class="table-wrap">
     <table id="table">
       <thead>
         <tr>
-          <th data-key="employee">Employee</th>
+          <th data-key="employee" class="admin-only">Employee</th>
           <th data-key="vendor">Vendor</th>
           <th data-key="certificate">Certificate</th>
           <th data-key="expirationDate">Expiration</th>
           <th data-key="status">Status</th>
+          <th data-key="approvalStatus">Request</th>
+          <th class="admin-only">Actions</th>
         </tr>
       </thead>
       <tbody id="tbody"></tbody>
     </table>
     <p id="emptyState" class="empty-state" hidden>No certifications match these filters.</p>
   </section>
+  </section>
+
+  <section id="tab-pending" class="admin-only" hidden>
+    <div class="section-head">
+      <h2>Pending requests</h2>
+      <p class="meta">Certificates employees have submitted, awaiting your review.</p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Employee</th>
+            <th>Vendor</th>
+            <th>Certificate</th>
+            <th>Expiration</th>
+            <th>Requested</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="pendingTbody"></tbody>
+      </table>
+      <p id="pendingEmptyState" class="empty-state" hidden>No pending requests right now.</p>
+    </div>
+  </section>
+
+  <section id="tab-users" class="admin-only" hidden>
+    <div class="section-head">
+      <h2>Users</h2>
+      <button id="openUserModal" class="primary" type="button">+ Add user</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th></th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Department</th>
+            <th>Role</th>
+            <th>Certificates</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="usersTbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="tab-profile" hidden>
+    <div class="profile-card" id="profileCard"></div>
+    <h2 class="profile-heading">My certifications</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Vendor</th>
+            <th>Certificate</th>
+            <th>Expiration</th>
+            <th>Status</th>
+            <th>Request</th>
+          </tr>
+        </thead>
+        <tbody id="profileTbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="tab-viewUser" hidden>
+    <button type="button" id="backFromViewUser" class="back-button">&larr; Back to users</button>
+    <div class="profile-card" id="viewUserProfileCard"></div>
+    <h2 class="profile-heading" id="viewUserHeading">Certifications</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Vendor</th>
+            <th>Certificate</th>
+            <th>Expiration</th>
+            <th>Status</th>
+            <th>Request</th>
+          </tr>
+        </thead>
+        <tbody id="viewUserTbody"></tbody>
+      </table>
+    </div>
+  </section>
+  </div>
 
   <dialog id="addModal">
     <form id="addForm" method="dialog">
       <h2>Add certification</h2>
 
-      <div class="field">
-        <label for="addEmployee">Employee name</label>
-        <input type="text" id="addEmployee" list="employeeOptions" required autocomplete="off" />
-        <datalist id="employeeOptions"></datalist>
+      <div class="field admin-only">
+        <label for="addUserId">Employee</label>
+        <select id="addUserId"></select>
       </div>
+      <p class="field-note" id="addSelfNote">This request will be submitted for your review.</p>
 
-      <div class="field">
-        <label for="addVendor">Vendor</label>
-        <input type="text" id="addVendor" list="vendorOptions" required autocomplete="off" />
-        <datalist id="vendorOptions"></datalist>
-      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="addVendor">Vendor</label>
+          <div class="combobox">
+            <input type="text" id="addVendor" autocomplete="off" required placeholder="Search or add a vendor…"
+                   role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-autocomplete="list" aria-controls="addVendorList" />
+            <span class="combobox-flag" id="addVendorFlag" hidden>New</span>
+            <ul class="combobox-list" id="addVendorList" role="listbox" hidden></ul>
+          </div>
+        </div>
 
-      <div class="field">
-        <label for="addCertificate">Certificate</label>
-        <input type="text" id="addCertificate" list="certificateOptions" required autocomplete="off" />
-        <datalist id="certificateOptions"></datalist>
+        <div class="field">
+          <label for="addCertificate">Certificate</label>
+          <div class="combobox">
+            <input type="text" id="addCertificate" autocomplete="off" required placeholder="Search or add a certificate…"
+                   role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-autocomplete="list" aria-controls="addCertificateList" />
+            <span class="combobox-flag" id="addCertificateFlag" hidden>New</span>
+            <ul class="combobox-list" id="addCertificateList" role="listbox" hidden></ul>
+          </div>
+        </div>
       </div>
 
       <div class="field">
@@ -96,6 +263,81 @@
         <button type="submit" id="submitAdd" class="primary">Save</button>
       </div>
     </form>
+  </dialog>
+
+  <dialog id="userModal">
+    <form id="userForm" method="dialog">
+      <h2 id="userModalTitle">Add user</h2>
+
+      <div class="field">
+        <label for="userFullName">Full name</label>
+        <input type="text" id="userFullName" required autocomplete="off" />
+      </div>
+
+      <div class="field">
+        <label for="userEmail">Email</label>
+        <input type="email" id="userEmail" required autocomplete="off" />
+      </div>
+
+      <div class="field">
+        <label for="userDepartment">Department</label>
+        <input type="text" id="userDepartment" autocomplete="off" />
+      </div>
+
+      <div class="field">
+        <label for="userRole">Role</label>
+        <select id="userRole">
+          <option value="employee">Employee</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+
+      <div class="field" id="userPhotoField">
+        <label for="userPhoto">Profile photo (optional, max 2MB)</label>
+        <input type="file" id="userPhoto" accept="image/*" />
+        <img id="userPhotoPreview" class="avatar avatar-preview" alt="" hidden />
+      </div>
+
+      <p id="userError" class="form-error" hidden></p>
+      <p id="userTempPassword" class="temp-password" hidden></p>
+
+      <div class="modal-actions">
+        <button type="button" id="cancelUser">Cancel</button>
+        <button type="submit" id="submitUser" class="primary">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="rejectModal">
+    <form id="rejectForm" method="dialog">
+      <h2>Reject request</h2>
+      <p class="meta" id="rejectSummary"></p>
+
+      <div class="field">
+        <label for="rejectReason">Reason (shown to the employee)</label>
+        <textarea id="rejectReason" rows="3" required></textarea>
+      </div>
+
+      <p id="rejectError" class="form-error" hidden></p>
+
+      <div class="modal-actions">
+        <button type="button" id="cancelReject">Cancel</button>
+        <button type="submit" class="primary">Reject</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="confirmModal">
+    <h2 id="confirmTitle">Confirm</h2>
+    <p id="confirmMessage" class="meta"></p>
+    <div class="field" id="confirmTypeField" hidden>
+      <label for="confirmTypeInput">Type <strong id="confirmTypeTarget"></strong> to confirm</label>
+      <input type="text" id="confirmTypeInput" autocomplete="off" />
+    </div>
+    <div class="modal-actions">
+      <button type="button" id="confirmCancel">Cancel</button>
+      <button type="button" id="confirmOk" class="primary danger">Delete</button>
+    </div>
   </dialog>
 
   <script src="app.js"></script>

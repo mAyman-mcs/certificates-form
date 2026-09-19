@@ -1,0 +1,65 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      PORT: 3000
+      DB_HOST: postgres
+      DB_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER:-certificates}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-certificates}
+      POSTGRES_DB: ${POSTGRES_DB:-certificates}
+      JWT_SECRET: ${JWT_SECRET:-dev-only-insecure-secret-change-me}
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      # node, not curl — node:20-alpine has no curl. A 200 here means the app
+      # booted and applied the schema, which is what the seeder waits on.
+      test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:3000/health', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 5s
+
+  seed:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["node", "db/seed.js"]
+    restart: "no" # one-shot: any restart policy would reseed forever
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER:-certificates}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-certificates}
+      POSTGRES_DB: ${POSTGRES_DB:-certificates}
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@mcsholding.com}
+      SEED_DEFAULT_PASSWORD: ${SEED_DEFAULT_PASSWORD:-P@ssw0rd}
+    depends_on:
+      app:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-certificates}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-certificates}
+      POSTGRES_DB: ${POSTGRES_DB:-certificates}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-certificates}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres-data:

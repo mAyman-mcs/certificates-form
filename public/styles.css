@@ -55,6 +55,85 @@ body {
   margin-bottom: 16px;
 }
 
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.user-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.85rem;
+}
+
+.user-box #logoutBtn {
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.user-box #logoutBtn:hover { background: var(--border); }
+
+.auth-screen {
+  min-height: 70vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-screen[hidden] { display: none; }
+
+.auth-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  width: min(360px, 92vw);
+}
+
+.auth-card h2 {
+  margin: 0 0 14px;
+  font-size: 1.15rem;
+}
+
+.auth-card .field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+/* .auth-card .field's own display:flex outranks the bare [hidden] UA rule,
+   so the reset screen's conditionally-hidden current-password field needs
+   its own override (same bug pattern as #userForm .field below). */
+.auth-card .field[hidden] { display: none; }
+
+.auth-card label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+}
+
+.auth-card input {
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.92rem;
+}
+
+.auth-card .modal-actions { justify-content: stretch; }
+.auth-card .modal-actions button { flex: 1; }
+
 .topbar h1 {
   font-size: 1.4rem;
   margin: 0;
@@ -106,12 +185,15 @@ body {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  min-width: 160px;
+  flex: 1 1 160px;
+  min-width: 140px;
+  max-width: 200px;
 }
 
 .control-search {
   min-width: 240px;
-  flex: 1 1 240px;
+  max-width: none;
+  flex: 2 1 240px;
 }
 
 .control-add {
@@ -127,12 +209,18 @@ body {
 
 .control input[type="text"],
 .control select {
+  width: 100%;
   padding: 7px 9px;
   border-radius: 6px;
   border: 1px solid var(--border);
   background: var(--bg);
   color: var(--text);
   font-size: 0.9rem;
+  /* Selects otherwise auto-size to their widest <option> — the certificate
+     dropdown has some long names and would blow out the whole filter row. */
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 #clearFilters {
@@ -159,6 +247,14 @@ button.primary {
 }
 
 button.primary:hover { filter: brightness(1.08); }
+button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* Reserved for confirming a destructive action — visually distinct from the
+   ordinary blue .primary so "Delete" reads as heavier than "Save"/"Log in". */
+button.primary.danger {
+  border-color: var(--expired);
+  background: var(--expired);
+}
 
 .table-wrap {
   background: var(--surface);
@@ -192,6 +288,19 @@ th {
   letter-spacing: 0.03em;
 }
 
+th[data-key] { padding-right: 22px; position: relative; }
+
+th[data-key]::after {
+  content: '\25be';
+  position: absolute;
+  right: 8px;
+  opacity: 0.3;
+  font-size: 0.7rem;
+}
+
+th[data-key].sorted-asc::after { content: '\25b4'; opacity: 1; color: var(--accent); }
+th[data-key].sorted-desc::after { content: '\25be'; opacity: 1; color: var(--accent); }
+
 tbody tr:hover { background: color-mix(in srgb, var(--accent) 6%, transparent); }
 
 .badge {
@@ -202,11 +311,38 @@ tbody tr:hover { background: color-mix(in srgb, var(--accent) 6%, transparent); 
   font-weight: 600;
 }
 
+/* Approval state is orthogonal to expiry status, so it gets its own visual
+   language rather than reusing the .badge.valid / .expired colours. */
+.badge.approval-pending { color: #92400e; background: #fef08a; }
+.badge.approval-approved { color: #166534; background: #bbf7d0; }
+.badge.approval-rejected { color: #9f1239; background: #fecdd3; }
+
 .badge.valid { color: var(--valid); background: var(--valid-bg); }
 .badge.expiring_soon { color: var(--expiring); background: var(--expiring-bg); }
 .badge.expired { color: var(--expired); background: var(--expired-bg); }
 .badge.no_expiration { color: var(--none); background: var(--none-bg); }
 .badge.unknown { color: var(--unknown); background: var(--unknown-bg); }
+
+/* Rejection reason as visible text, not a hover-only title tooltip — that
+   broke on every touch device. Truncated to one line, click/Enter/Space
+   expands it (see the .expanded toggle in app.js). */
+.rejection-reason {
+  max-width: 220px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.78rem;
+  color: var(--expired);
+  margin-top: 3px;
+  cursor: pointer;
+}
+
+.rejection-reason.expanded {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  max-width: 280px;
+}
 
 .empty-state {
   padding: 24px;
@@ -219,8 +355,11 @@ tbody tr:hover { background: color-mix(in srgb, var(--accent) 6%, transparent); 
   border-radius: 12px;
   background: var(--surface);
   color: var(--text);
-  padding: 20px;
-  width: min(420px, 92vw);
+  padding: 28px;
+  width: min(680px, 90vw);
+  min-height: 520px;
+  max-height: 88vh;
+  overflow-y: auto;
 }
 
 #addModal::backdrop {
@@ -231,6 +370,16 @@ tbody tr:hover { background: color-mix(in srgb, var(--accent) 6%, transparent); 
   margin: 0 0 14px;
   font-size: 1.1rem;
 }
+
+#addForm {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+/* Pushes Save/Cancel to the bottom instead of leaving a dead gap below them
+   now that the modal has a fixed min-height taller than its content. */
+#addForm .modal-actions { margin-top: auto; padding-top: 16px; }
 
 #addForm .field {
   display: flex;
@@ -255,6 +404,20 @@ tbody tr:hover { background: color-mix(in srgb, var(--accent) 6%, transparent); 
   font-size: 0.92rem;
 }
 
+/* Vendor and Certificate sit side by side on anything wider than a phone —
+   this is the field the app exists around, so it earns the extra room. */
+#addForm .field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+#addForm .field-row .field { margin-bottom: 0; }
+
+@media (max-width: 480px) {
+  #addForm .field-row { grid-template-columns: 1fr; }
+}
+
 .form-error {
   color: var(--expired);
   font-size: 0.85rem;
@@ -276,6 +439,304 @@ tbody tr:hover { background: color-mix(in srgb, var(--accent) 6%, transparent); 
   color: var(--text);
   cursor: pointer;
   font-size: 0.85rem;
+}
+
+/* Single gate for everything admin-only. The server enforces this for real;
+   this just keeps controls an employee can't use out of their way. */
+body:not(.is-admin) .admin-only { display: none !important; }
+
+/* The mirror image: employees get a merged single-page view (profile card +
+   their certifications, no tabs or filters); admins don't need it repeated. */
+body.is-admin .employee-only { display: none !important; }
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tab {
+  padding: 8px 16px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.tab:hover { color: var(--text); }
+
+.tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.tab-badge {
+  display: inline-block;
+  min-width: 18px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--expiring-bg);
+  color: var(--expiring);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.tab-badge[hidden] { display: none; }
+
+/* .tabs sets its own display:flex, which (being an author rule) outranks
+   the UA [hidden] rule regardless of specificity — same bug pattern as the
+   other [hidden] overrides in this file. Needed for hiding the nav while
+   viewing a single user's profile page. */
+.tabs[hidden] { display: none; }
+
+.back-button {
+  padding: 7px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.85rem;
+  margin-bottom: 16px;
+}
+
+.back-button:hover { background: var(--border); }
+
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.section-head h2,
+.profile-heading {
+  font-size: 1.05rem;
+  margin: 0;
+}
+
+.profile-heading { margin: 20px 0 12px; }
+
+.profile-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px;
+}
+
+.profile-card .label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+}
+
+.profile-card .value {
+  font-size: 0.95rem;
+  margin-top: 2px;
+  word-break: break-word;
+}
+
+.row-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.row-actions button {
+  padding: 6px 12px;
+  min-height: 32px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.82rem;
+}
+
+.row-actions button:hover { background: var(--border); }
+.row-actions button.danger { color: var(--expired); border-color: var(--expired-bg); }
+.row-actions button.approve { color: var(--valid); border-color: var(--valid-bg); }
+
+/* Visual gap before a destructive action so it can't be mistaken for — or
+   mis-clicked instead of — Approve/Reject/Edit sitting right next to it. */
+.action-divider {
+  width: 1px;
+  align-self: stretch;
+  background: var(--border);
+  margin: 0 2px;
+}
+
+/* Live-search combobox for Vendor/Certificate in the add-certification form:
+   filters the existing list as you type, with an explicit "+ Add as new"
+   entry when nothing matches — instead of a plain <select> or a freetext
+   field with no feedback about what already exists. */
+.combobox { position: relative; }
+
+/* The wrapping <div> stretches full-width as a flex child of .field, but the
+   <input> inside it is no longer a flex item itself, so it reverts to its
+   browser-default (~20 character) width unless told otherwise — which is
+   why Vendor/Certificate looked narrower than Expiration. */
+.combobox input { width: 100%; padding-right: 56px; }
+
+.combobox-flag {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  padding: 2px 7px;
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+.combobox-flag[hidden] { display: none; }
+
+.combobox-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.combobox-list[hidden] { display: none; }
+
+.combobox-list li {
+  padding: 7px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.combobox-list li:hover,
+.combobox-list li.active { background: var(--border); }
+
+.combobox-list li.combobox-new {
+  color: var(--accent);
+  font-weight: 600;
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+  padding-top: 8px;
+}
+
+.field-note {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0 0 12px;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  display: block;
+}
+
+.avatar-placeholder {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--border);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.avatar-preview {
+  width: 64px;
+  height: 64px;
+  margin-top: 8px;
+}
+
+.avatar[hidden] { display: none; }
+
+.profile-card .avatar,
+.profile-card .avatar-placeholder {
+  width: 64px;
+  height: 64px;
+  font-size: 1.1rem;
+}
+
+.temp-password {
+  font-size: 0.85rem;
+  background: var(--expiring-bg);
+  color: var(--expiring);
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin: 0 0 10px;
+  word-break: break-all;
+}
+
+#userModal, #rejectModal, #confirmModal {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  padding: 20px;
+  width: min(420px, 92vw);
+}
+
+#userModal::backdrop, #rejectModal::backdrop, #confirmModal::backdrop { background: rgba(0, 0, 0, 0.45); }
+
+#userModal h2, #rejectModal h2, #confirmModal h2 { margin: 0 0 14px; font-size: 1.1rem; }
+
+#userForm .field, #rejectForm .field, #confirmModal .field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+/* #userForm .field's id-scoped selector outranks the bare [hidden] UA rule,
+   so hiding a .field via the DOM `hidden` property needs its own override. */
+#userForm .field[hidden], #rejectForm .field[hidden], #confirmModal .field[hidden] { display: none; }
+
+#userForm label, #rejectForm label, #confirmModal label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+}
+
+#userForm input, #userForm select, #rejectForm textarea, #addForm select, #confirmModal input {
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.92rem;
+  font-family: inherit;
 }
 
 @media (max-width: 480px) {

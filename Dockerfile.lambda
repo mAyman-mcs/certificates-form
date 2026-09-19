@@ -4,6 +4,8 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 
 COPY lib ./lib
+COPY db ./db
+COPY data ./data
 COPY public ./public
 COPY server.js ./
 
